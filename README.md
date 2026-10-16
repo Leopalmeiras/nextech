@@ -15,7 +15,7 @@ Este repositório inicial **não contém catálogo real Intelbras nem preços re
 ## Requisitos
 - Node.js 20+
 - npm
-- Conta Supabase (opcional para iniciar; necessária para persistência)
+- Conta Supabase (necessária para catálogo e documentos)
 - Chave de API de um provedor de IA (opcional; necessária para IA generativa)
 
 ## Executar localmente
@@ -31,20 +31,26 @@ Configure `.env.local` somente no computador e as mesmas variáveis no painel de
 - `AI_PROVIDER`: `openai` ou `anthropic`
 - `OPENAI_API_KEY` ou `ANTHROPIC_API_KEY`
 - `AI_MODEL`: modelo disponível na sua conta
-- `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`: backend Supabase, se habilitado
+- `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`: backend Supabase (necessárias para catálogo e documentos)
 
 Nunca coloque segredos em variáveis `NEXT_PUBLIC_*` nem faça commit do `.env.local`.
 
 ## GitHub
-1. Crie um repositório vazio chamado `nexo-tech`.
-2. Descompacte este projeto e envie os arquivos para a raiz do repositório.
-3. Configure a hospedagem na Vercel conectando o repositório.
-4. Cadastre as variáveis de ambiente no projeto da Vercel.
-5. Faça o deploy. A interface poderá abrir online, mas IA e banco só funcionarão depois de configurados.
+1. Envie todos os arquivos deste projeto para a raiz do repositório.
+2. No Supabase, abra **SQL Editor**, cole `supabase/schema.sql` e execute. Isso cria as tabelas, mas **não insere produtos nem documentos**.
+3. No Supabase, copie a Project URL e a chave `service_role` para `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` no `.env.local`. Cadastre as mesmas variáveis em **Vercel → Project → Settings → Environment Variables**. A chave `service_role` deve permanecer apenas no servidor; nunca use `NEXT_PUBLIC_`.
+4. No **Table Editor** do Supabase, cadastre primeiro uma linha em `products` (fabricante, modelo, nome, categoria, especificações, URL e título da fonte); depois uma linha em `documents` associada ao produto; por fim, adicione os trechos pesquisáveis em `document_chunks`, usando o `id` do documento, o texto fiel, número da página e URL da fonte. Use somente informações verificadas do fabricante. Sem esses registros, o banco pode estar conectado enquanto o catálogo continua vazio.
+5. Configure `AI_PROVIDER`, `AI_MODEL` e a chave correspondente do provedor no `.env.local` e na Vercel.
+6. Faça um novo deploy na Vercel.
+
+## Verificação rápida
+- `GET /api/health`: mostra se a aplicação está online, se a tabela de produtos responde e quantos produtos existem.
+- `GET /api/catalog`: lista até 50 produtos cadastrados.
+- Os atalhos de consulta enviam a pergunta diretamente. A API só chama a IA quando recupera trechos da tabela `document_chunks`; sem evidências, retorna “Não confirmado”.
 
 ## Estado das funcionalidades
-- Interface responsiva: implementada.
-- Chat com respostas fundamentadas: estrutura inicial implementada; depende de configurar a API.
+- Interface responsiva e atalhos de consulta: implementados.
+- Chat com recuperação de trechos documentais: depende de configurar as APIs e cadastrar documentos.
 - Catálogo oficial: ainda precisa ser importado e validado.
 - Compatibilidade: sem dados de produtos não emite veredito.
 - Comparador de preços: interface e modelo de dados preparados; conectores reais ainda precisam ser configurados.
